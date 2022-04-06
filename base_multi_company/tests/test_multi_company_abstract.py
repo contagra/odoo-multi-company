@@ -49,11 +49,11 @@ class TestMultiCompanyAbstract(common.SavepointCase):
         super().tearDownClass()
 
     def add_company(self, company):
-        """ Add company to the test record. """
+        """Add company to the test record."""
         self.record_1.company_ids = [(4, company.id)]
 
     def switch_user_company(self, user, company):
-        """ Add a company to the user's allowed & set to current. """
+        """Add a company to the user's allowed & set to current."""
         user.write(
             {
                 "company_ids": [(6, 0, (company + user.company_ids).ids)],
@@ -62,7 +62,7 @@ class TestMultiCompanyAbstract(common.SavepointCase):
         )
 
     def test_compute_company_id(self):
-        """ It should set company_id to the top of the company_ids stack. """
+        """It should set company_id to the top of the company_ids stack."""
         self.add_company(self.company_2)
         self.env.user.company_ids = [(4, self.company_2.id)]
         self.env.user.company_id = self.company_2.id
@@ -72,7 +72,7 @@ class TestMultiCompanyAbstract(common.SavepointCase):
         )
 
     def test_search_company_id(self):
-        """ It should return correct record by searching company_id. """
+        """It should return correct record by searching company_id."""
         self.add_company(self.company_2)
         record = self.test_model.search(
             [
@@ -157,3 +157,77 @@ class TestMultiCompanyAbstract(common.SavepointCase):
         self.assertTrue(bool(tester.company_id.id))
         self.assertTrue(bool(tester.company_id.name))
         self.assertNotIn(user.company_id.id, tester.company_ids.ids)
+
+    def test_company_id_create(self):
+        """
+        Test object creation with both company_ids and company_id
+        :return: bool
+        """
+
+        user_obj = self.env["res.users"]
+        company_obj = self.env["res.company"]
+        company1 = self.env.ref("base.main_company")
+        # Create companies
+        company2 = company_obj.create({"name": "High salaries"})
+        company3 = company_obj.create({"name": "High salaries, twice more!"})
+        companies = company1 + company2 + company3
+        # Create a "normal" user (not the admin)
+        user = user_obj.create(
+            {
+                "name": "Best employee",
+                "login": "best-emplyee@example.com",
+                "company_id": company1.id,
+                "company_ids": [(6, False, companies.ids)],
+            }
+        )
+        tester_obj = self.test_model.with_user(user)
+        # We add both values
+        tester = tester_obj.create(
+            {
+                "name": "My tester",
+                "company_id": company1.id,
+                "company_ids": [(6, False, companies.ids)],
+            }
+        )
+        # Check if all companies have been added
+        self.assertEqual(tester.sudo().company_ids, companies)
+
+    def test_set_company_id(self):
+        """
+        Test object creation with both company_ids and company_id
+        :return: bool
+        """
+
+        user_obj = self.env["res.users"]
+        company_obj = self.env["res.company"]
+        company1 = self.env.ref("base.main_company")
+        # Create companies
+        company2 = company_obj.create({"name": "High salaries"})
+        company3 = company_obj.create({"name": "High salaries, twice more!"})
+        companies = company1 + company2 + company3
+        # Create a "normal" user (not the admin)
+        user = user_obj.create(
+            {
+                "name": "Best employee",
+                "login": "best-emplyee@example.com",
+                "company_id": company1.id,
+                "company_ids": [(6, False, companies.ids)],
+            }
+        )
+        tester_obj = self.test_model.with_user(user)
+        # We add both values
+        tester = tester_obj.create(
+            {"name": "My tester", "company_ids": [(6, False, companies.ids)]}
+        )
+        # Check if all companies have been added
+        self.assertEqual(tester.sudo().company_ids, companies)
+
+        # Check set company_id
+        tester.company_id = company1
+
+        self.assertEqual(tester.sudo().company_ids, company1)
+
+        # Check remove company_id
+        tester.company_id = False
+
+        self.assertFalse(tester.sudo().company_ids)
