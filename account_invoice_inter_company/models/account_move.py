@@ -31,9 +31,9 @@ class AccountMove(models.Model):
         )
         return company or False
 
-    def action_post(self):
+    def _post(self, soft=True):
         """Validated invoice generate cross invoice base on company rules"""
-        res = super().action_post()
+        res = super()._post(soft=soft)
         # Intercompany account entries or receipts aren't supported
         supported_types = {"out_invoice", "in_invoice", "out_refund", "in_refund"}
         for src_invoice in self.filtered(lambda x: x.move_type in supported_types):
@@ -60,9 +60,13 @@ class AccountMove(models.Model):
         dest_user = self.env["res.users"].search(domain, limit=1)
         for line in self.invoice_line_ids:
             try:
-                line.sudo(False).with_user(dest_user).with_context(
+                line.product_id.product_tmpl_id.sudo(False).with_user(
+                    dest_user
+                ).with_context(
                     {"allowed_company_ids": [dest_company.id]}
-                ).product_id.product_tmpl_id.check_access_rule("read")
+                ).check_access_rule(
+                    "read"
+                )
             except AccessError:
                 raise UserError(
                     _(
