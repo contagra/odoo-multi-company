@@ -1,5 +1,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import base64
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import Form
@@ -21,6 +23,34 @@ class AccountMove(models.Model):
         copy=False,
         prefetch=False,
     )
+    related_bill_id = fields.Many2one(
+        "account.move",
+        compute="_compute_related_bill_info",
+        compute_sudo=False,
+    )
+    related_bill_ids = fields.One2many(
+        "account.move",
+        "auto_invoice_id",
+        string="Related Bill",
+        readonly=True,
+        copy=False,
+    )
+    related_bill_name = fields.Char(
+        compute="_compute_related_bill_info",
+    )
+    related_bill_company_id = fields.Many2one(
+        "res.company",
+        compute="_compute_related_bill_info",
+    )
+
+    def _compute_related_bill_info(self):
+        for rec in self:
+            rec.related_bill_name = rec.sudo().related_bill_ids[:1].display_name
+            rec.related_bill_company_id = rec.sudo().related_bill_ids[:1].company_id.id
+            if rec.related_bill_company_id.id not in self.env.companies.ids:
+                rec.related_bill_id = False
+            else:
+                rec.related_bill_id = rec.related_bill_ids[:1].id
 
     def _find_company_from_invoice_partner(self):
         self.ensure_one()
@@ -34,23 +64,45 @@ class AccountMove(models.Model):
     def _post(self, soft=True):
         """Validated invoice generate cross invoice base on company rules"""
         res = super()._post(soft=soft)
+        if not self.env.context.get("account_invoice_inter_company_queued"):
+            self.create_counterpart_invoices()
+        return res
+
+    def create_counterpart_invoices(self):
         # Intercompany account entries or receipts aren't supported
         supported_types = {"out_invoice", "in_invoice", "out_refund", "in_refund"}
         for src_invoice in self.filtered(lambda x: x.move_type in supported_types):
             # do not consider invoices that have already been auto-generated,
             # nor the invoices that were already validated in the past
             dest_company = src_invoice._find_company_from_invoice_partner()
-            if not dest_company or src_invoice.auto_generated:
-                continue
-            intercompany_user = dest_company.intercompany_invoice_user_id
-            if intercompany_user:
-                src_invoice = src_invoice.with_user(intercompany_user).sudo()
-            else:
-                src_invoice = src_invoice.sudo()
-            src_invoice.with_company(dest_company.id).with_context(
-                skip_check_amount_difference=True
-            )._inter_company_create_invoice(dest_company)
-        return res
+            if dest_company:
+                if not src_invoice.auto_generated:
+                    intercompany_user = dest_company.intercompany_invoice_user_id
+                    if intercompany_user:
+                        src_invoice = src_invoice.with_user(intercompany_user).sudo()
+                    else:
+                        src_invoice = src_invoice.sudo()
+                    src_invoice.with_company(dest_company.id).with_context(
+                        skip_check_amount_difference=True
+                    )._inter_company_create_invoice(dest_company)
+                if src_invoice.move_type in ["out_invoice", "out_refund"]:
+                    src_invoice._attach_original_pdf_report()
+
+    def _attach_original_pdf_report(self):
+        supplier_invoice = self.auto_invoice_id
+        if not supplier_invoice:
+            supplier_invoice = self.search([("auto_invoice_id", "=", self.id)], limit=1)
+        pdf = self.env.ref("account.account_invoices")._render_qweb_pdf([self.id])[0]
+        self.env["ir.attachment"].create(
+            {
+                "name": self.name + ".pdf",
+                "type": "binary",
+                "datas": base64.b64encode(pdf),
+                "res_model": "account.move",
+                "res_id": supplier_invoice.id,
+                "mimetype": "application/pdf",
+            }
+        )
 
     def _check_intercompany_product(self, dest_company):
         self.ensure_one()
@@ -102,6 +154,10 @@ class AccountMove(models.Model):
         dest_invoice = self.create(dest_invoice_data)
         # create invoice lines
         dest_move_line_data = []
+        form = Form(
+            dest_invoice.with_company(dest_company.id),
+            "account_invoice_inter_company.view_move_form",
+        )
         for src_line in self.invoice_line_ids.filtered(lambda x: not x.display_type):
             if not src_line.product_id:
                 raise UserError(
@@ -113,7 +169,7 @@ class AccountMove(models.Model):
                     % src_line.name
                 )
             dest_move_line_data.append(
-                src_line._prepare_account_move_line(dest_invoice, dest_company)
+                src_line._prepare_account_move_line(dest_invoice, dest_company, form)
             )
         self.env["account.move.line"].create(dest_move_line_data)
         dest_invoice._move_autocomplete_invoice_lines_values()
@@ -288,7 +344,7 @@ class AccountMoveLine(models.Model):
     )
 
     @api.model
-    def _prepare_account_move_line(self, dest_move, dest_company):
+    def _prepare_account_move_line(self, dest_move, dest_company, form=False):
         """Generate invoice line values
         :param dest_move : the created invoice
         :rtype dest_move : account.move record
@@ -298,10 +354,12 @@ class AccountMoveLine(models.Model):
         self.ensure_one()
         # Use test.Form() class to trigger propper onchanges on the line
         product = self.product_id or False
-        dest_form = Form(
+        dest_form = form or Form(
             dest_move.with_company(dest_company.id),
             "account_invoice_inter_company.view_move_form",
         )
+        if dest_form.invoice_line_ids:
+            dest_form.invoice_line_ids.remove(0)
         with dest_form.invoice_line_ids.new() as line_form:
             # HACK: Related fields manually set due to Form() limitations
             line_form.company_id = dest_move.company_id
