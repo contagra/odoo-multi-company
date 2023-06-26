@@ -10,6 +10,6 @@
     "license": "AGPL-3",
     "installable": True,
     "auto_install": True,
-    "depends": ["purchase_sale_stock_inter_company", "stock_multi_company"],
+    "depends": ["purchase_sale_stock_inter_company"],
     "data": [],
 }
