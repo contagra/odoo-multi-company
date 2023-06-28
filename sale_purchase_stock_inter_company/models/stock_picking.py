@@ -14,8 +14,7 @@ class StockPicking(models.Model):
         # Only DropShip pickings
         so_picks = self.browse()
         for pick in self.filtered(
-            lambda x: x.location_dest_id.usage == "customer"
-        ).sudo():
+                lambda x: x.location_dest_id.usage == "customer").sudo():
             sale = pick.purchase_id.auto_sale_order_id
             if not sale:
                 continue
@@ -24,8 +23,8 @@ class StockPicking(models.Model):
                 qty_done = move_line.qty_done
                 purchase_line_id = move_line.move_id.purchase_line_id
                 so_move_lines = purchase_line_id.auto_sale_line_id.move_ids.mapped(
-                    "move_line_ids"
-                )
+                    "move_line_ids").filtered(lambda line: line.product_id.id ==
+                                              move_line.product_id.id)
                 for so_move_line in so_move_lines:
                     if so_move_line.qty_done < so_move_line.reserved_qty:
                         if so_move_line.reserved_qty >= qty_done:
