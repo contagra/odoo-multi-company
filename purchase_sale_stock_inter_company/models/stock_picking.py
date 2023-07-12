@@ -23,7 +23,10 @@ class StockPicking(models.Model):
             for move_line in pick.move_line_ids:
                 qty_done = move_line.qty_done
                 sale_line_id = move_line.move_id.sale_line_id
-                po_move_lines = sale_line_id.auto_purchase_line_id.move_ids.mapped(
+                po_moves = sale_line_id.auto_purchase_line_id.move_ids
+                if not sale_line_id.auto_purchase_line_id:
+                    po_moves = purchase.order_line.mapped("move_ids")
+                po_move_lines = po_moves.mapped(
                     "move_line_ids").filtered(lambda line: line.product_id.id ==
                                               move_line.product_id.id)
                 for po_move_line in po_move_lines:
