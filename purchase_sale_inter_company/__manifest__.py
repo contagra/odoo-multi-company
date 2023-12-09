@@ -6,10 +6,10 @@
 {
     "name": "Inter Company Module for Purchase to Sale Order",
     "summary": "Intercompany PO/SO rules",
-    "version": "1.0.1",
+    "version": "16.0.1.0.0",
     "category": "Purchase Management",
     "website": "https://github.com/OCA/multi-company",
-    "author": "Odoo SA, Akretion, Tecnativa, Odoo Community Association (OCA), Agrista",
+    "author": "Odoo SA, Akretion, Tecnativa, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "installable": True,
     "depends": ["sale", "purchase", "account_invoice_inter_company"],
