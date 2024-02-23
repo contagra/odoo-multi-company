@@ -7,7 +7,7 @@
 
 <!-- /!\ do not modify above this line -->
 
-# multi-company
+# Tools for managing instances containing multiple companies
 
 TODO: add repo description.
 
@@ -23,16 +23,23 @@ addon | version | maintainers | summary
 --- | --- | --- | ---
 [account_invoice_inter_company](account_invoice_inter_company/) | 16.0.1.0.2 |  | Intercompany invoice rules
 [account_multicompany_easy_creation](account_multicompany_easy_creation/) | 16.0.1.0.0 |  | This module adds a wizard to create companies easily
-[base_multi_company](base_multi_company/) | 16.0.1.0.1 | [![pedrobaeza](https://github.com/pedrobaeza.png?size=30px)](https://github.com/pedrobaeza) | Provides a base for adding multi-company support to models.
-[company_dependent_flag](company_dependent_flag/) | 16.0.1.0.0 |  | Apply css style to company dependent fields
+[account_reconcile_model_multicompany_propagate](account_reconcile_model_multicompany_propagate/) | 16.0.1.0.1 | [![EmilioPascual](https://github.com/EmilioPascual.png?size=30px)](https://github.com/EmilioPascual) | Propagate account reconcile model in companies with same chart template
+[base_multi_company](base_multi_company/) | 16.0.1.0.2 | [![pedrobaeza](https://github.com/pedrobaeza.png?size=30px)](https://github.com/pedrobaeza) | Provides a base for adding multi-company support to models.
+[company_dependent_flag](company_dependent_flag/) | 16.0.1.0.1 |  | Apply css style to company dependent fields
 [mail_multicompany](mail_multicompany/) | 16.0.1.0.1 | [![luisg123v](https://github.com/luisg123v.png?size=30px)](https://github.com/luisg123v) | Email Gateway Multi company
 [mail_template_multi_company](mail_template_multi_company/) | 16.0.1.0.0 | [![Olivier-LAURENT](https://github.com/Olivier-LAURENT.png?size=30px)](https://github.com/Olivier-LAURENT) | Mail Template Multi Company
+[partner_multi_company](partner_multi_company/) | 16.0.1.0.1 |  | Select individually the partner visibility on each company
 [product_account_multicompany_default](product_account_multicompany_default/) | 16.0.0.1.0 | [![yajo](https://github.com/yajo.png?size=30px)](https://github.com/yajo) | Set a default account for all companies of a product
-[product_category_company](product_category_company/) | 16.0.1.0.0 |  | Product categories as company dependent
+[product_category_company](product_category_company/) | 16.0.1.0.1 |  | Product categories as company dependent
+[product_category_company_favorite](product_category_company_favorite/) | 16.0.1.0.1 | [![legalsylvain](https://github.com/legalsylvain.png?size=30px)](https://github.com/legalsylvain) | Possilibity to set favorite product categories per company
 [product_tax_multicompany_default](product_tax_multicompany_default/) | 16.0.1.0.2 | [![Shide](https://github.com/Shide.png?size=30px)](https://github.com/Shide) | Product Tax Multi Company Default
-[purchase_sale_inter_company](purchase_sale_inter_company/) | 16.0.1.0.0 |  | Intercompany PO/SO rules
+[purchase_sale_inter_company](purchase_sale_inter_company/) | 16.0.1.1.1 |  | Intercompany PO/SO rules
+[purchase_sale_stock_inter_company](purchase_sale_stock_inter_company/) | 16.0.1.0.0 |  | Intercompany PO/SO rules with warehouse
 [res_company_active](res_company_active/) | 16.0.1.0.0 | [![legalsylvain](https://github.com/legalsylvain.png?size=30px)](https://github.com/legalsylvain) | Add the 'active' feature on company model
+[res_company_category](res_company_category/) | 16.0.1.0.1 | [![legalsylvain](https://github.com/legalsylvain.png?size=30px)](https://github.com/legalsylvain) | Company Categories
+[res_company_code](res_company_code/) | 16.0.1.0.0 | [![legalsylvain](https://github.com/legalsylvain.png?size=30px)](https://github.com/legalsylvain) | Add 'code' field on company model
 [res_company_search_view](res_company_search_view/) | 16.0.1.0.0 | [![legalsylvain](https://github.com/legalsylvain.png?size=30px)](https://github.com/legalsylvain) | Add a search view for company model
+[stock_intercompany](stock_intercompany/) | 16.0.1.0.0 |  | Stock Intercompany Delivery-Reception
 
 [//]: # (end addons)
 
