@@ -23,7 +23,7 @@ class ResCompany(models.Model):
             if not company.code:
                 company.complete_name = company.name
             else:
-                company.complete_name = "{} - {}".format(company.code, company.name)
+                company.complete_name = f"{company.code} - {company.name}"
 
     @api.model
     def name_search(self, name, args=None, operator="ilike", limit=100):
@@ -31,5 +31,5 @@ class ResCompany(models.Model):
         domain = []
         if name:
             domain = ["|", ("code", operator, name), ("name", operator, name)]
-        company = self.search(domain + args, limit=limit)
-        return company.name_get()
+        companies = self.search(domain + args, limit=limit)
+        return [(record.id, record.display_name) for record in companies]
